@@ -15,71 +15,165 @@ public class ListB<E> implements List<E> {
     //////               Обязательные к реализации методы             ///////
     /////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////
+
+    private E[] elements;
+    private int size;
+
+    public ListB() {
+        elements = (E[]) new Object[10];
+        size = 0;
+    }
+
+
     @Override
     public String toString() {
-        return "";
+        StringBuilder result = new StringBuilder("[");
+        for (int i = 0; i < size(); i++) {
+            result.append(get(i));
+            if (i < size() - 1) {
+                result.append(", ");
+            }
+        }
+        result.append("]");
+        return result.toString();
     }
 
     @Override
     public boolean add(E e) {
-        return false;
+        if (size == elements.length) {
+            resize();
+        }
+        elements[size] = e;
+        size++;
+        return true;
     }
 
     @Override
     public E remove(int index) {
-        return null;
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
+        }
+        E removedElement = elements[index];
+        for (int i = index; i < size - 1; i++) {
+            elements[i] = elements[i + 1];
+        }
+        elements[size - 1] = null;
+        size--;
+        return removedElement;
     }
 
     @Override
     public int size() {
-        return 0;
+        return size;
     }
 
     @Override
     public void add(int index, E element) {
-
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException("Индекс вне диапазона: " + index);
+        }
+        ensureCapacity(size + 1);
+        for (int i = size; i > index; i--) {
+            elements[i] = elements[i - 1];
+        }
+        elements[index] = element;
+        size++;
     }
 
     @Override
     public boolean remove(Object o) {
+        for (int i = 0; i < size; i++) {
+            if (o.equals(elements[i])) {
+                for (int j = i; j < size - 1; j++) {
+                    elements[j] = elements[j + 1];
+                }
+                elements[size - 1] = null;
+                size--;
+                return true;
+            }
+        }
         return false;
     }
 
     @Override
     public E set(int index, E element) {
-        return null;
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Индекс вне диапазона: " + index);
+        }
+        E oldElement = elements[index];
+        elements[index] = element;
+        return oldElement;
     }
 
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return size == 0;
     }
 
 
     @Override
     public void clear() {
-
+        for (int i = 0; i < elements.length; i++) {
+            elements[i] = null;
+        }
+        size = 0;
     }
 
     @Override
     public int indexOf(Object o) {
-        return 0;
+        for (int i = 0; i < size; i++) {
+            if (elements[i].equals(o)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override
     public E get(int index) {
-        return null;
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Индекс вне диапазона: " + index);
+        }
+        return elements[index];
     }
 
     @Override
     public boolean contains(Object o) {
+        for (int i = 0; i < size; i++) {
+            if (elements[i].equals(o)) {
+                return true;
+            }
+        }
         return false;
     }
 
     @Override
     public int lastIndexOf(Object o) {
-        return 0;
+        for (int i = size - 1; i >= 0; i--) {
+            if (elements[i].equals(o)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void ensureCapacity(int minCapacity) {
+        if (minCapacity > elements.length) {
+            int newCapacity = elements.length * 2;
+            @SuppressWarnings("unchecked")
+            E[] newArray = (E[]) new Object[newCapacity];
+            System.arraycopy(elements, 0, newArray, 0, size);
+            elements = newArray;
+        }
+    }
+
+    private void resize() {
+        E[] newArray = (E[]) new Object[elements.length * 2];
+        for (int i = 0; i < size; i++) {
+            newArray[i] = elements[i];
+        }
+        elements = newArray;
     }
 
 
@@ -92,53 +186,229 @@ public class ListB<E> implements List<E> {
 
     @Override
     public boolean containsAll(Collection<?> c) {
-        return false;
+        for (Object o : c) {
+            if (!contains(o)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
     public boolean addAll(Collection<? extends E> c) {
-        return false;
+        boolean isModified = false;
+        for (E e : c) {
+            if (add(e)) {
+                isModified = true;
+            }
+        }
+        return isModified;
     }
 
     @Override
     public boolean addAll(int index, Collection<? extends E> c) {
-        return false;
+        if (index < 0 || index > size()) {
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
+        }
+        boolean isModified = false;
+        for (E e : c) {
+            add(index++, e);
+            isModified = true;
+        }
+        return isModified;
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        return false;
+        boolean isModified = false;
+        for (Object o : c) {
+            while (remove(o)) {
+                isModified = true;
+            }
+        }
+        return isModified;
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        return false;
+        boolean isModified = false;
+        Iterator<?> it = iterator();
+        while (it.hasNext()) {
+            Object element = it.next();
+            if (!c.contains(element)) {
+                it.remove();
+                isModified = true;
+            }
+        }
+        return isModified;
     }
 
 
     @Override
     public List<E> subList(int fromIndex, int toIndex) {
-        return null;
+        if (fromIndex < 0 || toIndex > size || fromIndex > toIndex) {
+            throw new IndexOutOfBoundsException("Индексы выходят за пределы коллекции");
+        }
+        List<E> sublist = new ListB<>();
+        for (int i = fromIndex; i < toIndex; i++) {
+            sublist.add(get(i));
+        }
+        return sublist;
     }
 
     @Override
     public ListIterator<E> listIterator(int index) {
-        return null;
+        if (index < 0 || index > size) {
+            throw new IndexOutOfBoundsException("Индекс вне диапазона: " + index);
+        }
+        return new ListIterator<E>() {
+            private int cursor = index;
+            private int lastReturned = -1;
+            @Override
+            public boolean hasNext() {
+                return cursor < size;
+            }
+            @Override
+            public E next() {
+                if (!hasNext()) {
+                    return null;
+                }
+                lastReturned = cursor;
+                return (E) elements[cursor++];
+            }
+            @Override
+            public boolean hasPrevious() {
+                return cursor > 0;
+            }
+            @Override
+            public E previous() {
+                if (!hasPrevious()) {
+                    return null;
+                }
+                lastReturned = --cursor;
+                return (E) elements[cursor];
+            }
+            @Override
+            public int nextIndex() {
+                return cursor;
+            }
+            @Override
+            public int previousIndex() {
+                return cursor - 1;
+            }
+            @Override
+            public void remove() {
+                if (lastReturned < 0) {
+                    throw new IllegalStateException();
+                }
+                ListB.this.remove(lastReturned);
+                cursor = lastReturned;
+                lastReturned = -1;
+            }
+            @Override
+            public void set(E e) {
+                if (lastReturned < 0) {
+                    throw new IllegalStateException();
+                }
+                ListB.this.set(lastReturned, e);
+            }
+            @Override
+            public void add(E e) {
+                ListB.this.add(cursor++, e);
+                lastReturned = -1;
+            }
+        };
     }
 
     @Override
     public ListIterator<E> listIterator() {
-        return null;
+        return new ListIterator<E>() {
+            private int cursor = 0;
+            private int lastReturned = -1;
+            @Override
+            public boolean hasNext() {
+                return cursor < size;
+            }
+            @Override
+            public E next() {
+                if (!hasNext()) {
+                    return null;
+                }
+                lastReturned = cursor;
+                return (E) elements[cursor++];
+            }
+            @Override
+            public boolean hasPrevious() {
+                return cursor > 0;
+            }
+            @Override
+            public E previous() {
+                if (!hasPrevious()) {
+                    return null;
+                }
+                lastReturned = --cursor;
+                return (E) elements[cursor];
+            }
+            @Override
+            public int nextIndex() {
+                return cursor;
+            }
+            @Override
+            public int previousIndex() {
+                return cursor - 1;
+            }
+            @Override
+            public void remove() {
+                if (lastReturned < 0) {
+                    throw new IllegalStateException();
+                }
+                ListB.this.remove(lastReturned);
+                cursor = lastReturned;
+                lastReturned = -1;
+            }
+
+            @Override
+            public void set(E e) {
+                if (lastReturned < 0) {
+                    throw new IllegalStateException();
+                }
+                ListB.this.set(lastReturned, e);
+            }
+            @Override
+            public void add(E e) {
+                ListB.this.add(cursor++, e);
+                lastReturned = -1;
+            }
+        };
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-        return null;
+        if (a.length < size) {
+            @SuppressWarnings("unchecked")
+            T[] newArray = (T[]) java.lang.reflect.Array.newInstance(a.getClass().getComponentType(), size);
+            for (int i = 0; i < size; i++) {
+                newArray[i] = (T) elements[i];
+            }
+            return newArray;
+        }
+        for (int i = 0; i < size; i++) {
+            a[i] = (T) elements[i];
+        }
+        if (a.length > size) {
+            a[size] = null;
+        }
+
+        return a;
     }
 
     @Override
     public Object[] toArray() {
-        return new Object[0];
+        Object[] result = new Object[size];
+        for (int i = 0; i < size; i++) {
+            result[i] = elements[i];
+        }
+        return result;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -147,9 +417,22 @@ public class ListB<E> implements List<E> {
     ////////        но они будут нужны для корректной отладки    ////////////
     /////////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////
+
     @Override
     public Iterator<E> iterator() {
-        return null;
+        return new Iterator<E>() {
+            private int cursor = 0;
+            @Override
+            public boolean hasNext() {
+                return cursor < size;
+            }
+            @Override
+            public E next() {
+                if (!hasNext()) {
+                    return null;
+                }
+                return (E) elements[cursor++];
+            }
+        };
     }
-
 }
